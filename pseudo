@@ -1,0 +1,24 @@
+create data frame of all feautres and points of all past games given current player
+
+features to train model on all previous games
+- mp
+- fg
+- fga
+- 3p
+- 3pa
+- ft
+- fta
+- total rb
+- ast
+- stl
+- blk
+- tov
+- pf
+- +/-
+
+result: points
+
+use link to find data from previous 5 games as features
+
+given previous 5 games predict over or under points.
+
