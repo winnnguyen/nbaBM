@@ -3,8 +3,8 @@ import numpy as np
 from bs4 import BeautifulSoup
 import requests
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import LabelEncoder
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 
 #USER INPUT FOR BET
 pFirstName = input("Player First Name: ").upper()
@@ -104,7 +104,7 @@ year = currYear - (exp - 1)
 all = pd.DataFrame()
 while year <= currYear:
     prevGamesLink = f"https://www.basketball-reference.com/players/{pLastName[0:1]}/{pLastName[0:5]}{pFirstName[0:2]}01/gamelog/{year}"
-    currSeason = pd.read_html(prevGamesLink)[7]
+    currSeason = pd.read_html(prevGamesLink, match='Rk')[0]
     all = pd.concat([all, currSeason], ignore_index=True)
     year += 1
 
@@ -150,21 +150,23 @@ all.dropna(how='any', axis=0, inplace = True)
 #CREATING MODEL AND DATA TRAINING
 teamEncoder = LabelEncoder()
 homeEncoder = LabelEncoder()
+#scaler = MinMaxScaler()
 X = all.drop(stat, axis = 1)
+y = all[stat]
 X['Unnamed: 5'] = homeEncoder.fit_transform(X['Unnamed: 5'])
 X['Opp'] = teamEncoder.fit_transform(X['Opp'])
-y = all[stat]
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+#X_train_scaled = scaler.fit_transform(X_train)
 
-LR = LinearRegression()
+LR = LogisticRegression(max_iter=2000)
 LR.fit(X_train.values, y_train.values)
 
 #PREDICTION
-n = [mp, fg, fga, thr, thra, ft, fta, trb, ast, stl, blk, tov, pf, pts, pm, homeEncoder.transform([home])[0], teamEncoder.transform([team])[0]]
+n = [mp, fg, fga, thr, thra, ft, fta, trb, ast, stl, blk, tov, pf, pts, pm, float(homeEncoder.transform([home])[0]), float(teamEncoder.transform([team])[0])]
 n.pop(index)
 avgs = np.array(n)
-statPred = round(LR.predict(avgs.reshape(1, -1))[0], 3)
+statPred = LR.predict(avgs.reshape(1, -1))[0]
 
 if statPred > line:
     print('Take the Over!')
